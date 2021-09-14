@@ -1,0 +1,119 @@
+var express = require('express');
+var router = express.Router();
+const mongoose = require('mongoose');
+
+const vehicleSchema = new mongoose.Schema({
+    _id: String,
+    vehicleID: String,
+    vehicleLicenseNO: String,
+    mileage: String,
+    nextServiceReminder: String,
+    
+});
+const vehicle = mongoose.model('Vehicle', vehicleSchema);
+
+
+/* GET vehicle listing.    http://localhost:8081/api/vehicle/         */
+router.get('/', function (req, res, next) {
+
+
+	Vehicle.find(
+		(e, r) => {
+			res.json(r)
+		}
+	)
+});
+router.get('/getById/:id', function (req, res, next) {
+
+
+	Vehicle.find({ "_id": ObjectID(req.params.id) },
+		(e, r) => {
+			res.json(r)
+		}
+	)
+}); router.get('/_search/:query', function (req, res, next) {
+
+	const query = {
+		$or: [{ vehicleID: new RegExp((req.params['query']), "i") },
+		{ vehicleLicenseNO: new RegExp((req.params['query']), "i") },
+		{ mileage: new RegExp((req.params['query']), "i") },
+		{ nextServiceReminder: new RegExp((req.params['query']), "i") },]
+		
+
+	}
+	console.log(req.params['query']);                               
+	Vehicle.find(query,     
+		(e, r) => {
+			res.json(r)
+		}
+	)
+});
+router.post('/', async function (req, res, next) {
+
+	await Vehicle(req.body).save((e, d) => {
+		res.send(d);
+	});
+});
+
+
+
+
+router.route("/:id").put(function (req, res) {
+	const userID = req.params.id;
+	var { vehicleID,  vehicleLicenseNO, mileage, nextServiceReminder } = req.body;
+	console.log(userID);
+
+	const updateVehicle = {
+
+		vehicleID,
+    vehicleLicenseNO,
+    mileage,
+    nextServiceReminder
+
+	}
+
+	const query = { "_id": new ObjectID(req.params.id) };
+	const update = {
+		"$set": {
+			vehicleID,
+      vehicleLicenseNO,
+      mileage,
+      nextServiceReminder
+
+		}
+	};
+	console.log(JSON.stringify({
+		vehicleID,
+    vehicleLicenseNO,
+    mileage,
+    nextServiceReminder
+
+	}))
+	const options = { "upsert": true };
+
+	Vehicle .findOneAndUpdate(query, update, options, function (e, d) {
+		if (e) return res.send(500, { error: e });
+		res.send('ok')
+	})
+})
+
+
+
+
+
+
+
+
+
+
+router.delete('/', async function (req, res, next) {
+
+	await Vehicle.deleteOne(req.body, (e) => {
+		if (e) return res.send(500, { error: e });
+		res.send('ok')
+	})
+
+});
+
+
+module.exports = router;
